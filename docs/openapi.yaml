@@ -1,0 +1,2672 @@
+openapi: 3.0.3
+info:
+  title: Gestão de Chamados API
+  version: 0.1.0
+paths:
+  /api/v1/alertas/:
+    get:
+      operationId: v1_alertas_list
+      summary: Consultar alertas históricos de SLA
+      parameters:
+      - in: query
+        name: chamado
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      - in: query
+        name: tipo
+        schema:
+          type: string
+          enum:
+          - CRITICO_SEM_RESPONSAVEL
+          - PRIMEIRA_RESPOSTA_EM_RISCO
+          - RESOLUCAO_EM_RISCO
+        description: |-
+          * `CRITICO_SEM_RESPONSAVEL` - Crítico sem responsável
+          * `RESOLUCAO_EM_RISCO` - Resolução em risco
+          * `PRIMEIRA_RESPOSTA_EM_RISCO` - Primeira resposta em risco
+      - in: query
+        name: triagem_pendente
+        schema:
+          type: boolean
+      tags:
+      - Alertas
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAlertaList'
+          description: ''
+  /api/v1/auditoria/:
+    get:
+      operationId: v1_auditoria_list
+      description: Somente leitura, paginado20/máximo100, ordem -criado_em,-id. Intervalo
+        [inicio,fim) com fuso; sistema=true filtra ator nulo.
+      summary: Consultar auditoria (Gestor)
+      parameters:
+      - in: query
+        name: acao
+        schema:
+          type: string
+          maxLength: 60
+          minLength: 1
+      - in: query
+        name: ator
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: entidade
+        schema:
+          type: string
+          maxLength: 60
+          minLength: 1
+      - in: query
+        name: entidade_id
+        schema:
+          type: string
+          maxLength: 50
+          minLength: 1
+      - in: query
+        name: fim
+        schema:
+          type: string
+          format: date-time
+        description: Fim exclusivo, ISO8601 com fuso ou Z.
+      - in: query
+        name: inicio
+        schema:
+          type: string
+          format: date-time
+        description: Início inclusivo, ISO8601 com fuso ou Z.
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: sistema
+        schema:
+          type: boolean
+      tags:
+      - Auditoria
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLogAuditoriaList'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/auditoria/{id}/:
+    get:
+      operationId: v1_auditoria_retrieve
+      summary: Consultar evento de auditoria (Gestor)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Auditoria
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogAuditoria'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/auth/login/:
+    post:
+      operationId: v1_auth_login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      summary: Entrar com e-mail e senha
+      tags:
+      - Autenticação
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+              examples:
+                ParDeTokens:
+                  value:
+                    access: <access>
+                    refresh: <refresh>
+                  summary: Par de tokens
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/auth/logout/:
+    post:
+      operationId: v1_auth_logout_create
+      description: Exige access Bearer. O access existente continua válido até expirar.
+      summary: Revogar o refresh do usuário autenticado
+      tags:
+      - Autenticação
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Logout'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/auth/refresh/:
+    post:
+      operationId: v1_auth_refresh_create
+      description: Retorna novo access e refresh; o refresh anterior não pode ser
+        reutilizado.
+      summary: Renovar e rotacionar tokens
+      tags:
+      - Autenticação
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Refresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Refresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Refresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/categorias/:
+    get:
+      operationId: v1_categorias_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      tags:
+      - Categorias
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoriaList'
+          description: ''
+    post:
+      operationId: v1_categorias_create
+      tags:
+      - Categorias
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+          description: ''
+  /api/v1/categorias/{id}/:
+    get:
+      operationId: v1_categorias_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este categoria.
+        required: true
+      tags:
+      - Categorias
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+          description: ''
+    put:
+      operationId: v1_categorias_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este categoria.
+        required: true
+      tags:
+      - Categorias
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+          description: ''
+    patch:
+      operationId: v1_categorias_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este categoria.
+        required: true
+      tags:
+      - Categorias
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoriaEntrada'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoriaEntrada'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoriaEntrada'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+          description: ''
+    delete:
+      operationId: v1_categorias_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este categoria.
+        required: true
+      tags:
+      - Categorias
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/:
+    get:
+      operationId: v1_chamados_list
+      summary: Listar fila visível
+      parameters:
+      - in: query
+        name: aberto_em_ate
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: aberto_em_de
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: categoria
+        schema:
+          type: integer
+      - in: query
+        name: nivel_atual
+        schema:
+          type: string
+          enum:
+          - N1
+          - N2
+        description: |-
+          * `N1` - N1
+          * `N2` - N2
+      - name: ordering
+        required: false
+        in: query
+        description: Qual campo usar ao ordenar os resultados.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      - in: query
+        name: prioridade
+        schema:
+          type: string
+          enum:
+          - ALTA
+          - BAIXA
+          - CRITICA
+          - MEDIA
+        description: |-
+          * `CRITICA` - Crítica
+          * `ALTA` - Alta
+          * `MEDIA` - Média
+          * `BAIXA` - Baixa
+      - in: query
+        name: responsavel
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: Um termo de busca.
+        schema:
+          type: string
+      - in: query
+        name: sla_status
+        schema:
+          type: string
+          enum:
+          - CUMPRIDO
+          - EM_RISCO
+          - NAO_APLICAVEL
+          - NO_PRAZO
+          - VENCIDO
+          - VIOLADO
+        description: |-
+          * `NO_PRAZO` - NO_PRAZO
+          * `EM_RISCO` - EM_RISCO
+          * `VENCIDO` - VENCIDO
+          * `CUMPRIDO` - CUMPRIDO
+          * `VIOLADO` - VIOLADO
+          * `NAO_APLICAVEL` - NAO_APLICAVEL
+      - in: query
+        name: solicitante
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - ABERTO
+          - AGUARDANDO_SOLICITANTE
+          - CANCELADO
+          - EM_ATENDIMENTO
+          - FECHADO
+          - REABERTO
+          - RESOLVIDO
+        description: |-
+          * `ABERTO` - Aberto
+          * `EM_ATENDIMENTO` - Em atendimento
+          * `AGUARDANDO_SOLICITANTE` - Aguardando solicitante
+          * `RESOLVIDO` - Resolvido
+          * `REABERTO` - Reaberto
+          * `FECHADO` - Fechado
+          * `CANCELADO` - Cancelado
+      tags:
+      - Chamados
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedChamadoList'
+          description: ''
+    post:
+      operationId: v1_chamados_create
+      summary: Abrir chamado em N1
+      tags:
+      - Chamados
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbrirChamado'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AbrirChamado'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AbrirChamado'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/:
+    get:
+      operationId: v1_chamados_retrieve
+      summary: Consultar chamado visível
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Chamados
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+    patch:
+      operationId: v1_chamados_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Chamados
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEditarChamado'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEditarChamado'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEditarChamado'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/assumir/:
+    post:
+      operationId: v1_chamados_assumir_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Atendimento
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/comentarios/:
+    get:
+      operationId: v1_chamados_comentarios_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      tags:
+      - Comentários
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedComentarioList'
+          description: ''
+    post:
+      operationId: v1_chamados_comentarios_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Comentários
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComentarioEntrada'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ComentarioEntrada'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ComentarioEntrada'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comentario'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/escalar/:
+    post:
+      operationId: v1_chamados_escalar_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Atendimento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/eventos/:
+    get:
+      operationId: v1_chamados_eventos_list
+      summary: Eventos internos de atendimento (equipe)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      tags:
+      - Histórico
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEventoList'
+          description: ''
+  /api/v1/chamados/{id}/historico/:
+    get:
+      operationId: v1_chamados_historico_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      tags:
+      - Histórico
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedHistoricoList'
+          description: ''
+  /api/v1/chamados/{id}/prioridade/:
+    post:
+      operationId: v1_chamados_prioridade_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Atendimento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrioridadeEntrada'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrioridadeEntrada'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrioridadeEntrada'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/reabrir/:
+    post:
+      operationId: v1_chamados_reabrir_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Atendimento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/reatribuir/:
+    post:
+      operationId: v1_chamados_reatribuir_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Atendimento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reatribuir'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reatribuir'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reatribuir'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/transicionar/:
+    post:
+      operationId: v1_chamados_transicionar_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Atendimento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transicao'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Transicao'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Transicao'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/chamados/{id}/triar/:
+    post:
+      operationId: v1_chamados_triar_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Atendimento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Motivo'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chamado'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/metricas/sla/:
+    get:
+      operationId: v1_metricas_sla_retrieve
+      description: Primeira resposta por chamado; resolução por ciclo. Resultados
+        NAO_APLICAVEL não entram no denominador. Taxa null quando não há obrigações
+        aplicáveis concluídas.
+      summary: Cumprimento de SLA por conclusão (Gestor)
+      parameters:
+      - in: query
+        name: fim
+        schema:
+          type: string
+          format: date-time
+        description: Fim exclusivo, ISO8601 com fuso ou Z.
+      - in: query
+        name: inicio
+        schema:
+          type: string
+          format: date-time
+        description: Início inclusivo, ISO8601 com fuso ou Z.
+      tags:
+      - Métricas
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlaMetricas'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/metricas/volume/:
+    get:
+      operationId: v1_metricas_volume_retrieve
+      description: Intervalo [inicio,fim) ISO8601 com fuso. Agrupa estado atual; não
+        duplica chamados reabertos.
+      summary: Volume por data de abertura (Gestor)
+      parameters:
+      - in: query
+        name: fim
+        schema:
+          type: string
+          format: date-time
+        description: Fim exclusivo, ISO8601 com fuso ou Z.
+      - in: query
+        name: inicio
+        schema:
+          type: string
+          format: date-time
+        description: Início inclusivo, ISO8601 com fuso ou Z.
+      tags:
+      - Métricas
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Volume'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/sla/politicas/:
+    get:
+      operationId: v1_sla_politicas_list
+      summary: Listar políticas (Gestor)
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      tags:
+      - SLA
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPoliticaList'
+          description: ''
+  /api/v1/sla/politicas/{id}/:
+    get:
+      operationId: v1_sla_politicas_retrieve
+      summary: Consultar política (Gestor)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - SLA
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Politica'
+          description: ''
+    patch:
+      operationId: v1_sla_politicas_partial_update
+      summary: Alterar prazo para novos chamados (Gestor)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - SLA
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPoliticaEntrada'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPoliticaEntrada'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPoliticaEntrada'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Politica'
+          description: ''
+  /api/v1/usuarios/:
+    get:
+      operationId: v1_usuarios_list
+      summary: Listar usuários (Gestor)
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Número de resultados a serem retornados por página.
+        schema:
+          type: integer
+      tags:
+      - Usuários
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsuarioList'
+          description: ''
+    post:
+      operationId: v1_usuarios_create
+      summary: Cadastrar solicitante
+      tags:
+      - Usuários
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cadastro'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Cadastro'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Cadastro'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/usuarios/{id}/:
+    patch:
+      operationId: v1_usuarios_partial_update
+      summary: Alterar perfil, nível, nome ou ativação (Gestor)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Usuários
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAlterarUsuario'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAlterarUsuario'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAlterarUsuario'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+  /api/v1/usuarios/me/:
+    get:
+      operationId: v1_usuarios_me_retrieve
+      summary: Consultar meu perfil
+      tags:
+      - Usuários
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+          description: ''
+  /api/v1/usuarios/staff/:
+    post:
+      operationId: v1_usuarios_staff_create
+      summary: Criar Analista ou Gestor (Gestor)
+      tags:
+      - Usuários
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Equipe'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Equipe'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Equipe'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+          description: ''
+components:
+  schemas:
+    AbrirChamado:
+      type: object
+      properties:
+        titulo:
+          type: string
+          maxLength: 200
+        descricao:
+          type: string
+          maxLength: 10000
+        categoria:
+          type: integer
+        impacto:
+          $ref: '#/components/schemas/ImpactoEnum'
+        urgencia:
+          $ref: '#/components/schemas/UrgenciaEnum'
+      required:
+      - categoria
+      - descricao
+      - impacto
+      - titulo
+      - urgencia
+    Alerta:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        chamado:
+          type: integer
+          readOnly: true
+        ciclo:
+          type: integer
+          readOnly: true
+        tipo:
+          allOf:
+          - $ref: '#/components/schemas/TipoAlertaEnum'
+          readOnly: true
+        triagem_pendente:
+          type: boolean
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - chamado
+      - ciclo
+      - criado_em
+      - id
+      - tipo
+      - triagem_pendente
+    Cadastro:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        nome:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+      required:
+      - email
+      - nome
+      - password
+    Categoria:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nome:
+          type: string
+          readOnly: true
+        ativa:
+          type: boolean
+          readOnly: true
+      required:
+      - ativa
+      - id
+      - nome
+    CategoriaEntrada:
+      type: object
+      properties:
+        nome:
+          type: string
+          maxLength: 100
+        ativa:
+          type: boolean
+      required:
+      - nome
+    Chamado:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+          readOnly: true
+        descricao:
+          type: string
+          readOnly: true
+        categoria:
+          type: integer
+          readOnly: true
+        solicitante:
+          type: integer
+          readOnly: true
+        responsavel:
+          type: integer
+          readOnly: true
+          nullable: true
+        impacto:
+          allOf:
+          - $ref: '#/components/schemas/ImpactoEnum'
+          readOnly: true
+        urgencia:
+          allOf:
+          - $ref: '#/components/schemas/UrgenciaEnum'
+          readOnly: true
+        prioridade:
+          allOf:
+          - $ref: '#/components/schemas/PrioridadeEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusChamadoEnum'
+          readOnly: true
+        nivel_atual:
+          allOf:
+          - $ref: '#/components/schemas/NivelAtualEnum'
+          readOnly: true
+        aberto_em:
+          type: string
+          format: date-time
+          readOnly: true
+        primeira_resposta_em:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        prazo_primeira_resposta:
+          type: string
+          format: date-time
+          readOnly: true
+        resolvido_em:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        fechado_em:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        ciclos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ciclo'
+          readOnly: true
+        sla:
+          allOf:
+          - $ref: '#/components/schemas/Sla'
+          readOnly: true
+        sla_status:
+          type: string
+          readOnly: true
+        triado_em:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        triado_por:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - aberto_em
+      - categoria
+      - ciclos
+      - descricao
+      - fechado_em
+      - id
+      - impacto
+      - nivel_atual
+      - prazo_primeira_resposta
+      - primeira_resposta_em
+      - prioridade
+      - resolvido_em
+      - responsavel
+      - sla
+      - sla_status
+      - solicitante
+      - status
+      - titulo
+      - triado_em
+      - triado_por
+      - urgencia
+    Ciclo:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        inicio:
+          type: string
+          format: date-time
+          readOnly: true
+        prazo:
+          type: string
+          format: date-time
+          readOnly: true
+        minutos_aplicados:
+          type: integer
+          readOnly: true
+        prioridade:
+          allOf:
+          - $ref: '#/components/schemas/PrioridadeEnum'
+          readOnly: true
+        resolvido_em:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        encerrado_em:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        resultado:
+          type: string
+          readOnly: true
+      required:
+      - encerrado_em
+      - id
+      - inicio
+      - minutos_aplicados
+      - prazo
+      - prioridade
+      - resolvido_em
+      - resultado
+    Comentario:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        autor:
+          type: integer
+          readOnly: true
+        texto:
+          type: string
+          readOnly: true
+        interno:
+          type: boolean
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - autor
+      - criado_em
+      - id
+      - interno
+      - texto
+    ComentarioEntrada:
+      type: object
+      properties:
+        texto:
+          type: string
+          maxLength: 10000
+        interno:
+          type: boolean
+          default: false
+      required:
+      - texto
+    Equipe:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        nome:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+        perfil:
+          $ref: '#/components/schemas/PerfilEquipeEnum'
+        nivel:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/NivelEnum'
+          - $ref: '#/components/schemas/NullEnum'
+      required:
+      - email
+      - nome
+      - password
+      - perfil
+    Erro:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErroDetalhe'
+      required:
+      - error
+    ErroDetalhe:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details: {}
+      required:
+      - code
+      - details
+      - message
+    EstadoSlaEnum:
+      enum:
+      - NO_PRAZO
+      - EM_RISCO
+      - VENCIDO
+      - CUMPRIDO
+      - VIOLADO
+      - NAO_APLICAVEL
+      type: string
+      description: |-
+        * `NO_PRAZO` - NO_PRAZO
+        * `EM_RISCO` - EM_RISCO
+        * `VENCIDO` - VENCIDO
+        * `CUMPRIDO` - CUMPRIDO
+        * `VIOLADO` - VIOLADO
+        * `NAO_APLICAVEL` - NAO_APLICAVEL
+    Evento:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        tipo:
+          allOf:
+          - $ref: '#/components/schemas/TipoEventoEnum'
+          readOnly: true
+        autor:
+          type: integer
+          readOnly: true
+          nullable: true
+        motivo:
+          type: string
+          readOnly: true
+        dados:
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - autor
+      - criado_em
+      - dados
+      - id
+      - motivo
+      - tipo
+    GrupoCategoria:
+      type: object
+      properties:
+        categoria_id:
+          type: integer
+        nome:
+          type: string
+        total:
+          type: integer
+      required:
+      - categoria_id
+      - nome
+      - total
+    GrupoNivel:
+      type: object
+      properties:
+        nivel:
+          type: string
+        total:
+          type: integer
+      required:
+      - nivel
+      - total
+    GrupoPrioridade:
+      type: object
+      properties:
+        prioridade:
+          $ref: '#/components/schemas/PrioridadeEnum'
+        total:
+          type: integer
+      required:
+      - prioridade
+      - total
+    GrupoStatus:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusChamadoEnum'
+        total:
+          type: integer
+      required:
+      - status
+      - total
+    Historico:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status_anterior:
+          allOf:
+          - $ref: '#/components/schemas/StatusChamadoEnum'
+          readOnly: true
+        status_novo:
+          allOf:
+          - $ref: '#/components/schemas/StatusChamadoEnum'
+          readOnly: true
+        autor:
+          type: integer
+          readOnly: true
+          nullable: true
+        motivo:
+          type: string
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - autor
+      - criado_em
+      - id
+      - motivo
+      - status_anterior
+      - status_novo
+    ImpactoEnum:
+      enum:
+      - ALTO
+      - MEDIO
+      - BAIXO
+      type: string
+      description: |-
+        * `ALTO` - Alto
+        * `MEDIO` - Médio
+        * `BAIXO` - Baixo
+    Indicador:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/EstadoSlaEnum'
+        percentual_consumido:
+          type: number
+          format: double
+        prazo:
+          type: string
+          format: date-time
+        violado:
+          type: boolean
+        pausado:
+          type: boolean
+      required:
+      - pausado
+      - percentual_consumido
+      - prazo
+      - status
+      - violado
+    LogAuditoria:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ator:
+          type: integer
+          readOnly: true
+          nullable: true
+        acao:
+          type: string
+          readOnly: true
+        entidade:
+          type: string
+          readOnly: true
+        entidade_id:
+          type: string
+          readOnly: true
+        antes:
+          readOnly: true
+        depois:
+          readOnly: true
+        ip:
+          type: string
+          readOnly: true
+          nullable: true
+        user_agent:
+          type: string
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - acao
+      - antes
+      - ator
+      - criado_em
+      - depois
+      - entidade
+      - entidade_id
+      - id
+      - ip
+      - user_agent
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    Logout:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - refresh
+    Motivo:
+      type: object
+      properties:
+        motivo:
+          type: string
+          maxLength: 10000
+      required:
+      - motivo
+    NivelAtualEnum:
+      enum:
+      - N1
+      - N2
+      type: string
+      description: |-
+        * `N1` - N1
+        * `N2` - N2
+    NivelEnum:
+      enum:
+      - N1
+      - N2
+      type: string
+      description: |-
+        * `N1` - Nível 1
+        * `N2` - Nível 2
+    NullEnum:
+      enum:
+      - null
+    PaginatedAlertaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alerta'
+    PaginatedCategoriaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Categoria'
+    PaginatedChamadoList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Chamado'
+    PaginatedComentarioList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comentario'
+    PaginatedEventoList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evento'
+    PaginatedHistoricoList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Historico'
+    PaginatedLogAuditoriaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogAuditoria'
+    PaginatedPoliticaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Politica'
+    PaginatedUsuarioList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Usuario'
+    PatchedAlterarUsuario:
+      type: object
+      properties:
+        nome:
+          type: string
+          maxLength: 150
+        perfil:
+          $ref: '#/components/schemas/PerfilUsuarioEnum'
+        nivel:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/NivelEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        is_active:
+          type: boolean
+    PatchedCategoriaEntrada:
+      type: object
+      properties:
+        nome:
+          type: string
+          maxLength: 100
+        ativa:
+          type: boolean
+    PatchedEditarChamado:
+      type: object
+      properties:
+        titulo:
+          type: string
+          maxLength: 200
+        descricao:
+          type: string
+          maxLength: 10000
+        categoria:
+          type: integer
+    PatchedPoliticaEntrada:
+      type: object
+      properties:
+        minutos_resolucao:
+          type: integer
+          maximum: 525600
+          minimum: 1
+    PerfilEquipeEnum:
+      enum:
+      - ANALISTA
+      - GESTOR
+      type: string
+      description: |-
+        * `ANALISTA` - ANALISTA
+        * `GESTOR` - GESTOR
+    PerfilUsuarioEnum:
+      enum:
+      - SOLICITANTE
+      - ANALISTA
+      - GESTOR
+      type: string
+      description: |-
+        * `SOLICITANTE` - Solicitante
+        * `ANALISTA` - Analista
+        * `GESTOR` - Gestor
+    PeriodoSaida:
+      type: object
+      properties:
+        inicio:
+          type: string
+          format: date-time
+          nullable: true
+        fim:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - fim
+      - inicio
+    Politica:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        prioridade:
+          allOf:
+          - $ref: '#/components/schemas/PrioridadeEnum'
+          readOnly: true
+        minutos_resolucao:
+          type: integer
+          readOnly: true
+      required:
+      - id
+      - minutos_resolucao
+      - prioridade
+    PrioridadeEntrada:
+      type: object
+      properties:
+        motivo:
+          type: string
+          maxLength: 10000
+        prioridade:
+          $ref: '#/components/schemas/PrioridadeEnum'
+      required:
+      - motivo
+      - prioridade
+    PrioridadeEnum:
+      enum:
+      - CRITICA
+      - ALTA
+      - MEDIA
+      - BAIXA
+      type: string
+      description: |-
+        * `CRITICA` - Crítica
+        * `ALTA` - Alta
+        * `MEDIA` - Média
+        * `BAIXA` - Baixa
+    Reatribuir:
+      type: object
+      properties:
+        responsavel:
+          type: integer
+          minimum: 1
+      required:
+      - responsavel
+    Refresh:
+      type: object
+      properties:
+        refresh:
+          type: string
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    ResumoObrigacao:
+      type: object
+      properties:
+        cumpridos:
+          type: integer
+        violados:
+          type: integer
+        nao_aplicaveis:
+          type: integer
+        total_concluidos:
+          type: integer
+        numerador:
+          type: integer
+        denominador:
+          type: integer
+        taxa_cumprimento_percentual:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - cumpridos
+      - denominador
+      - nao_aplicaveis
+      - numerador
+      - taxa_cumprimento_percentual
+      - total_concluidos
+      - violados
+    Sla:
+      type: object
+      properties:
+        primeira_resposta:
+          $ref: '#/components/schemas/Indicador'
+        resolucao:
+          $ref: '#/components/schemas/Indicador'
+        status:
+          $ref: '#/components/schemas/EstadoSlaEnum'
+      required:
+      - primeira_resposta
+      - resolucao
+      - status
+    SlaMetricas:
+      type: object
+      properties:
+        periodo:
+          $ref: '#/components/schemas/PeriodoSaida'
+        base_periodo:
+          type: string
+        primeira_resposta:
+          $ref: '#/components/schemas/ResumoObrigacao'
+        resolucao:
+          $ref: '#/components/schemas/ResumoObrigacao'
+      required:
+      - base_periodo
+      - periodo
+      - primeira_resposta
+      - resolucao
+    StatusChamadoEnum:
+      enum:
+      - ABERTO
+      - EM_ATENDIMENTO
+      - AGUARDANDO_SOLICITANTE
+      - RESOLVIDO
+      - REABERTO
+      - FECHADO
+      - CANCELADO
+      type: string
+      description: |-
+        * `ABERTO` - Aberto
+        * `EM_ATENDIMENTO` - Em atendimento
+        * `AGUARDANDO_SOLICITANTE` - Aguardando solicitante
+        * `RESOLVIDO` - Resolvido
+        * `REABERTO` - Reaberto
+        * `FECHADO` - Fechado
+        * `CANCELADO` - Cancelado
+    TipoAlertaEnum:
+      enum:
+      - CRITICO_SEM_RESPONSAVEL
+      - RESOLUCAO_EM_RISCO
+      - PRIMEIRA_RESPOSTA_EM_RISCO
+      type: string
+      description: |-
+        * `CRITICO_SEM_RESPONSAVEL` - Crítico sem responsável
+        * `RESOLUCAO_EM_RISCO` - Resolução em risco
+        * `PRIMEIRA_RESPOSTA_EM_RISCO` - Primeira resposta em risco
+    TipoEventoEnum:
+      enum:
+      - TRIAGEM
+      - PRIORIDADE_ALTERADA
+      - ESCALADO
+      type: string
+      description: |-
+        * `TRIAGEM` - Triagem
+        * `PRIORIDADE_ALTERADA` - Prioridade alterada
+        * `ESCALADO` - Escalado
+    TokenPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    Transicao:
+      type: object
+      properties:
+        motivo:
+          type: string
+          maxLength: 10000
+        status:
+          $ref: '#/components/schemas/StatusChamadoEnum'
+      required:
+      - motivo
+      - status
+    UrgenciaEnum:
+      enum:
+      - ALTA
+      - MEDIA
+      - BAIXA
+      type: string
+      description: |-
+        * `ALTA` - Alta
+        * `MEDIA` - Média
+        * `BAIXA` - Baixa
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: E-mail
+        nome:
+          type: string
+          readOnly: true
+        perfil:
+          allOf:
+          - $ref: '#/components/schemas/PerfilUsuarioEnum'
+          readOnly: true
+        nivel:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/NivelEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Ativo
+          description: Indica que o usuário será tratado como ativo. Ao invés de excluir
+            contas de usuário, desmarque isso.
+      required:
+      - email
+      - id
+      - is_active
+      - nivel
+      - nome
+      - perfil
+    Volume:
+      type: object
+      properties:
+        periodo:
+          $ref: '#/components/schemas/PeriodoSaida'
+        base_periodo:
+          type: string
+        total:
+          type: integer
+        por_status:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrupoStatus'
+        por_nivel:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrupoNivel'
+        por_prioridade:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrupoPrioridade'
+        por_categoria:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrupoCategoria'
+      required:
+      - base_periodo
+      - periodo
+      - por_categoria
+      - por_nivel
+      - por_prioridade
+      - por_status
+      - total
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
