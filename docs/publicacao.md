@@ -1,7 +1,8 @@
 # Preparação para GitHub
 
-O repositório Git local foi inicializado na branch main. Nenhum repositório remoto, push ou release
-foi criado nesta etapa. GitHub Actions ainda precisa rodar no repositório publicado.
+O repositório está publicado na branch main em
+https://github.com/DevCaiq/helpdesk-api. Nenhuma release foi criada.
+Os resultados de integração contínua devem ser consultados no GitHub Actions.
 
 ## O que incluir
 

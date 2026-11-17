@@ -9,7 +9,8 @@ Inclui indicadores de SLA, triagem N1, escalonamento manual/automático, alertas
 job periódico local, Django Admin para consulta, Swagger e testes.
 Métricas de gestão e consulta de auditoria pela API também estão disponíveis.
 Demonstração idempotente, coleção Postman e preparação para GitHub também estão prontas.
-O repositório ainda não foi publicado; hospedagem e agendamento de produção ficam para depois.
+Código disponível no [GitHub](https://github.com/DevCaiq/helpdesk-api).
+Hospedagem e agendamento de produção ficam para depois.
 
 ## Decisões
 
@@ -30,6 +31,8 @@ Pré-requisitos: Python 3.12 e uv. Desenvolvimento e testes usam SQLite;
 Docker é opcional. PostgreSQL é reservado à produção.
 
 ```powershell
+git clone https://github.com/DevCaiq/helpdesk-api.git
+cd helpdesk-api
 Copy-Item .env.example .env
 uv sync --frozen
 .\.venv\Scripts\Activate.ps1
@@ -371,7 +374,8 @@ uv run python manage.py check --settings=config.settings.test
 ```
 
 O CI mantém uma verificação adicional de compatibilidade com PostgreSQL de produção,
-sem exigir PostgreSQL local. O workflow ainda não foi executado no GitHub.
+sem exigir PostgreSQL local. Consulte as execuções no
+[GitHub Actions](https://github.com/DevCaiq/helpdesk-api/actions).
 SQLite não comprova comportamento de locks de produção.
 
 ## Produção
@@ -385,6 +389,6 @@ Não utilizar `config.settings.test` fora da suíte de testes.
 
 ## Próximas entregas
 
-1. Revisão de entrega e publicação no GitHub, com execução dos workflows preparados.
+1. Acompanhamento dos workflows no GitHub e revisão dos resultados.
 2. Validação de PostgreSQL/Docker em ambiente disponível.
 3. Escolha de hospedagem e agendamento de produção.
